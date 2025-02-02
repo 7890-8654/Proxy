@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ストリーム</title>
+</head>
+<body>
+    <h1>動画ストリーム</h1>
+    {% if stream_url %}
+        <video controls>
+            <source src="{{ stream_url }}" type="video/mp4">
+            お使いのブラウザはvideoタグに対応していません。
+        </video>
+    {% else %}
+        <p>ストリームURLが取得できませんでした。</p>
+    {% endif %}
+</body>
+</html>
+
+

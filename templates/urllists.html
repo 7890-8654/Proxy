@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SandSmokeURLリスト</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #333;
+        }
+        input[type="text"] {
+            padding: 10px;
+            margin: 5px 0;
+            width: 200px;
+        }
+        button {
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            background: #fff;
+            margin: 5px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .error {
+            color: red;
+            margin: 10px 0;
+        }
+    </style>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCFtCV9OP-oJqrzVaTqvuRkLD4GW2Hhhc0",
+            authDomain: "sandsmoke-79dca.firebaseapp.com",
+            databaseURL: "https://sandsmoke-79dca-default-rtdb.firebaseio.com",
+            projectId: "sandsmoke-79dca",
+            storageBucket: "sandsmoke-79dca.firebasestorage.app",
+            messagingSenderId: "61141711489",
+            appId: "1:61141711489:web:a1d074c6f9e6a3ecd26b80",
+            measurementId: "G-C8FH5PFNEP"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        window.addUrl = function() {
+            const urlInput = document.getElementById("urlInput").value;
+            const nicknameInput = document.getElementById("nicknameInput").value;
+            const errorMessage = document.getElementById("errorMessage");
+
+            // エラーメッセージを初期化悪用厳禁
+            errorMessage.textContent = '';
+
+            // URLがhttps形式であるかチェック
+            if (!urlInput.startsWith('https://')) {
+                errorMessage.textContent = 'URLはhttps形式でなければなりません。';
+                return;
+            }
+
+            if (!nicknameInput) {
+                errorMessage.textContent = 'ニックネームを入力してください。';
+                return;
+            }
+
+            const urlId = Date.now();
+            const existingUrlsRef = ref(database, 'urls/');
+
+            onValue(existingUrlsRef, (snapshot) => {
+                let exists = false;
+                snapshot.forEach((childSnapshot) => {
+                    const data = childSnapshot.val();
+                    if (data.url === urlInput) {
+                        exists = true;
+                    }
+                });
+
+                if (exists) {
+                    errorMessage.textContent = 'このURLはすでに存在します。';
+                } else {
+                    set(ref(database, 'urls/' + urlId), {
+                        url: urlInput,
+                        nickname: nicknameInput
+                    }).then(() => {
+                        document.getElementById("urlInput").value = '';
+                        document.getElementById("nicknameInput").value = '';
+                    }).catch((error) => {
+                        console.error("Error adding URL: ", error);
+                    });
+                }
+            });
+        };
+
+        window.displayUrls = function() {
+            const urlsRef = ref(database, 'urls/');
+            onValue(urlsRef, (snapshot) => {
+                const urlList = document.getElementById("urlList");
+                urlList.innerHTML = '';
+                snapshot.forEach((childSnapshot) => {
+                    const data = childSnapshot.val();
+                    const li = document.createElement("li");
+                    li.textContent = `${data.nickname}: ${data.url}`;
+                    urlList.appendChild(li);
+                });
+            });
+        };
+
+        window.onload = () => {
+            displayUrls();
+        };
+    </script>
+</head>
+<body>
+    <h1>SandSmokeURLリスト</h1>
+    <input type="text" id="urlInput" placeholder="URLを入力" />
+    <input type="text" id="nicknameInput" placeholder="ニックネームを入力" />
+    <button onclick="addUrl()">URLを追加</button>
+    <div class="error" id="errorMessage"></div>
+    <h2>保存されたURLリスト:</h2>
+    <ul id="urlList"></ul>
+</body>
+</html>

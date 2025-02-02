@@ -1,0 +1,60 @@
+// 現在機能していないが必要なAPIのトークンが足りないときに、代替としてpipedを使う予定だった
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>動画プレーヤー</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        #player-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        #video-title {
+            margin: 10px 0;
+            font-size: 24px;
+            color: #333;
+        }
+        #author-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            vertical-align: middle;
+        }
+        #channel-name {
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+<script>
+    console.log({{ videourls[0] }})
+    //windows alert("意味ないなあああ")
+</script>
+<div id="contents">
+    <div id="player-container">
+        <span class="video-player-area-a">
+            <video playsinline poster="https://img.youtube.com/vi/{{ g_videoid }}/0.jpg" id="player" controls>
+                <source src="{{ videourls[0] }}" type="video/mp4">
+                お使いのブラウザは video タグをサポートしていません。
+            
+            </video>
+        </span>
+        <h2 id="video-title">{{ videotitle }}</h2>
+        <img id="author-icon" src="{{ authoricon }}" alt="Author Icon" />
+        <span id="channel-name">{{ author }}</span>
+    </div>
+</div>
+
+</body>
+</html>

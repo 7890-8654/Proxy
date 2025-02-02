@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公式instance - SandSmoke</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e9ecef;
+            color: #343a40;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            text-align: center;
+            color: #495057;
+            margin-bottom: 30px;
+        }
+        h2 {
+            text-align: center;
+            color: #495057;
+            margin-bottom: 20px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        li {
+            background-color: #ffffff;
+            margin: 10px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        li:hover {
+            transform: translateY(-2px);
+        }
+        li a {
+            text-decoration: none;
+            color: #007bff;
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+        li a:hover {
+            text-decoration: underline;
+        }
+        .health-status {
+            font-weight: bold;
+            margin-left: 10px;
+            color: #28a745;
+        }
+        .recommendation {
+            font-weight: bold;
+            margin-left: 10px;
+            color: #ffc107;
+        }
+    </style>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCFtCV9OP-oJqrzVaTqvuRkLD4GW2Hhhc0",
+            authDomain: "sandsmoke-79dca.firebaseapp.com",
+            databaseURL: "https://sandsmoke-79dca-default-rtdb.firebaseio.com",
+            projectId: "sandsmoke-79dca",
+            storageBucket: "sandsmoke-79dca.firebasestorage.app",
+            messagingSenderId: "61141711489",
+            appId: "1:61141711489:web:a1d074c6f9e6a3ecd26b80",
+            measurementId: "G-C8FH5PFNEP"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const urlRef = ref(database, 'hostedUrls');
+
+        function checkUrlHealth(url) {
+            return new Promise((resolve) => {
+                const startTime = performance.now();
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => {
+                    controller.abort(); 
+                }, 4000);
+
+                fetch(url, { signal: controller.signal })
+                    .then(response => {
+                        clearTimeout(timeoutId);
+                        const endTime = performance.now();
+                        const duration = endTime - startTime;
+                        if (response.ok) {
+                            resolve({ status: 'OK', duration: duration });
+                        } else {
+                            resolve({ status: 'Error', duration: duration, message: response.statusText });
+                        }
+                    })
+                    .catch(error => {
+                        clearTimeout(timeoutId);
+                        const endTime = performance.now();
+                        const duration = endTime - startTime;
+                        resolve({ status: 'Error', duration: duration, message: error.message });
+                    });
+            });
+        }
+
+        function getRecommendationStars(duration) {
+            const maxResponseTime = 4000; 
+            const healthPercentage = Math.max(0, Math.min(100, (maxResponseTime - duration) / maxResponseTime * 100));
+            const rating = Math.ceil(healthPercentage / 20);
+            
+            let stars = '☆☆☆☆☆';
+            if (rating > 0) {
+                stars = '★'.repeat(rating) + '☆'.repeat(5 - rating);
+            }
+            return stars;
+        }
+
+        function loadUrls() {
+            get(urlRef).then((snapshot) => {
+                const urlList = snapshot.exists() ? snapshot.val() : [];
+                const ul = document.getElementById('urlList');
+
+                if (urlList.length === 0) {
+                    ul.innerHTML = '<li>保存されているURLはありません。</li>';
+                } else {
+                    const promises = urlList.map(url => {
+                        return checkUrlHealth(url).then(result => {
+                            const stars = url.includes('vercel') ? '☆☆☆☆☆' : getRecommendationStars(result.duration);
+                            return { url, result, stars };
+                        });
+                    });
+
+                    promises.forEach(promise => {
+                        promise.then(({ url, result, stars }) => {
+                            const li = document.createElement('li');
+                            const statusText = result.status === 'OK' ? 
+                                `健康状態: 処理時間 (${result.duration.toFixed(2)}ms)` :
+                                `エラー: ${result.message} - 処理時間 (${result.duration.toFixed(2)}ms)`; 
+
+                            li.innerHTML = `<a href="${url}" target="_blank">${url}</a> <span class="health-status">${statusText}</span> <span class="recommendation">${stars}</span>`;
+                            ul.appendChild(li);
+                        });
+                    });
+
+                    Promise.all(promises).then(results => {
+                        results.sort((a, b) => {
+                            const aRating = a.stars.replace(/[^★]/g, '').length;
+                            const bRating = b.stars.replace(/[^★]/g, '').length;
+                            return bRating - aRating;
+                        });
+
+                        ul.innerHTML = ''; 
+                        results.forEach(({ url, result, stars }) => {
+                            const li = document.createElement('li');
+                            const statusText = result.status === 'OK' ? 
+                                `健康状態: 処理時間 (${result.duration.toFixed(2)}ms)` :
+                                `エラー: ${result.message} - 処理時間 (${result.duration.toFixed(2)}ms)`; 
+
+                            li.innerHTML = `<a href="${url}" target="_blank">${url}</a> <span class="health-status">${statusText}</span> <span class="recommendation">${stars}</span>`;
+                            ul.appendChild(li);
+                        });
+                    });
+                }
+            }).catch((error) => {
+                console.error('URLの取得に失敗しました:', error);
+            });
+        }
+
+        window.onload = loadUrls;
+    </script>
+</head>
+<body>
+    <h1>SandSmoke公式instance</h1>
+    <h2>公式instanceはbotにより自動で追加されます</h2>
+    <p>インスタンスを取得中　平均６秒　</p>
+    <ul id="urlList"></ul>
+</body>
+</html>

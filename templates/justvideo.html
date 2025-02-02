@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <title>Video Player</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pure/2.0.6/pure-min.css" />
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f9f9f9;
+        }
+        video {
+            width: 80%;
+            max-width: 800px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Video Player</h1>
+    <video id="video-player" controls playsinline>
+        <source src="{{ stream_url }}" type="video/mp4">
+        お使いのブラウザは video タグをサポートしていません。
+    </video>
+    <script>
+        // ストリームURLを設定
+        const streamUrl = "{{ videourls[0] }}"; // バグ防止のため、変数を小文字に、編集の際は気を付けて
+
+        // ビデオプレイヤーにストリームURLを設定
+        const videoPlayer = document.getElementById('video-player');
+        videoPlayer.src = streamUrl;
+        
+        // ビデオを自動再生
+        videoPlayer.play();
+    </script>
+</body>
+</html>

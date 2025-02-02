@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SandSmoke</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-image: url('https://tse4.mm.bing.net/th?id=OIG4.gDAHAlmQD0nqjGKj5ehr&pid=ImgGn');
+            background-size: cover;
+            background-position: center;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        h1 {
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            font-size: 3rem; 
+            color: #fff;
+        }
+
+        .slide-in-left {
+            opacity: 0;
+            transform: translateX(-100px); 
+            animation: slideInLeft 2s forwards, glow 1.5s infinite alternate; 
+        }
+
+        .slide-in-right {
+            opacity: 0;
+            transform: translateX(100px); 
+            animation: slideInRight 2s forwards, glow 1.5s infinite alternate; 
+        }
+
+        @keyframes slideInLeft {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes glow {
+            0% {
+                text-shadow: 0 0 5px rgba(255, 255, 255, 0.8), 0 0 10px rgba(255, 255, 0, 0.7);
+            }
+            100% {
+                text-shadow: 0 0 20px rgba(255, 255, 255, 1), 0 0 30px rgba(255, 255, 0, 1);
+            }
+        }
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 20;
+        }
+        .top-bar button {
+            padding: 5px 10px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            background-color: #444;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        .counter-card {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            color: black;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            z-index: 30;
+            width: 200px;
+            cursor: move;
+        }
+        input[type="text"] {
+            width: 60%;
+            padding: 10px;
+            font-size: 1.5rem;
+            margin-top: 20px;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+        }
+        .icon-container {
+            display: flex;
+            margin-top: 20px;
+        }
+        .icon {
+            margin: 0 10px;
+            cursor: pointer;
+        }
+        .icon img {
+            width: 60px;
+            height: 60px;
+        }
+        .cookie-notice {
+            display: none;
+        }
+        .toggle-proxy, .launch-rammerhead, .deploy-button {
+            padding: 5px 10px;
+            font-size: 1.5rem;
+            margin-top: 20px;
+            cursor: pointer;
+            background-color: #444;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            margin-right: 10px;
+            display: none;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        .overlay-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+            color: black;
+        }
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            z-index: 20;
+        }
+        .bottom-bar button {
+            padding: 5px 10px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            background-color: #444;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            margin: 0 10px;
+        }
+    </style>
+    <script type="module">
+        
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCFtCV9OP-oJqrzVaTqvuRkLD4GW2Hhhc0",
+            authDomain: "sandsmoke-79dca.firebaseapp.com",
+            databaseURL: "https://sandsmoke-79dca-default-rtdb.firebaseio.com",
+            projectId: "sandsmoke-79dca",
+            storageBucket: "sandsmoke-79dca.firebasestorage.app",
+            messagingSenderId: "61141711489",
+            appId: "1:61141711489:web:a1d074c6f9e6a3ecd26b80",
+            measurementId: "G-C8FH5PFNEP"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        const today = new Date().toISOString().split('T')[0];
+        const counterRef = ref(database, `accessCount/${today}`);
+        const totalCountRef = ref(database, 'accessCount/totalCount');
+        const urlRef = ref(database, 'hostedUrls');
+
+        function saveHostUrl() {
+            const hostUrl = window.location.origin;
+
+            get(urlRef).then((snapshot) => {
+                const existingUrls = snapshot.exists() ? snapshot.val() : [];
+
+                if (!existingUrls.includes(hostUrl)) {
+                    existingUrls.push(hostUrl);
+                    set(urlRef, existingUrls).then(() => {
+                        console.log('ホストURLが保存されました:', hostUrl);
+                    }).catch((error) => {
+                        console.error('URLの保存に失敗しました:', error);
+                    });
+                } else {
+                    console.log('このURLはすでに保存されています:', hostUrl);
+                }
+            }).catch((error) => {
+                console.error('URLの取得に失敗しました:', error);
+            });
+        }
+
+        function incrementAccessCount() {
+            get(counterRef).then((snapshot) => {
+                let currentCount = snapshot.exists() ? snapshot.val().count : 0;
+                currentCount++;
+
+                set(counterRef, { count: currentCount }).then(() => {
+                    displayAccessCount(currentCount);
+                }).catch((error) => {
+                    console.error('データの書き込みに失敗しました:', error);
+                });
+
+                get(totalCountRef).then((totalSnapshot) => {
+                    let totalCount = totalSnapshot.exists() ? totalSnapshot.val().count : 0;
+                    totalCount++;
+
+                    set(totalCountRef, { count: totalCount }).then(() => {
+                        displayTotalCount(totalCount);
+                    }).catch((error) => {
+                        console.error('総アクセス数の書き込みに失敗しました:', error);
+                    });
+                }).catch((error) => {
+                    console.error('総アクセス数の取得に失敗しました:', error);
+                });
+            }).catch((error) => {
+                console.error('データの取得に失敗しました:', error);
+            });
+        }
+
+        function displayAccessCount(count) {
+            document.getElementById('todayAccessCount').textContent = `今日のアクセス数: ${count}`;
+        }
+
+        function displayTotalCount(count) {
+            document.getElementById('totalAccessCount').textContent = `総アクセス数: ${count}`;
+        }
+
+        window.onload = function() {
+            incrementAccessCount();
+            saveHostUrl(); 
+        };
+    </script>
+</head>
+<body>
+
+    <div class="top-bar">
+        <button id="urlListButton" onclick="window.location.href='instance.html'">URLリスト</button>
+        <button id="openChatButton">オープンチャット</button>
+        <button id="shadowButton">New Shadow proxy</button>
+        <button id="uvproxyButton">New Croxy proxy</button>
+        <button id="proxyButton">New rammer proxy</button>
+        <button class="deploy-button" id="deployButton">デプロイ</button>
+    </div>
+
+    <h1>
+        <span class="slide-in-left">SandSmoke</span>
+        <span class="slide-in-right">V2.3</span>
+    </h1>
+    
+    <button class="toggle-proxy" id="proxyToggle">proxy: OFF</button>
+    <button class="launch-rammerhead" id="rammerheadButton">Rammerhead</button>
+
+    <input type="text" id="searchInput" placeholder="SandSmoke" onkeypress="handleKeyPress(event)">
+
+    <div class="icon-container">
+        <div class="icon" onclick="window.open('https://sand-smoke-proxy.vercel.app/chat')">
+            <img src="https://irasuto-sensei.com/wp-content/uploads/2023/03/F.png" alt="アイコン1">
+        </div>
+        <div class="icon" onclick="window.open('https://scratch.mit.edu/users/proxy_minotaur_sab/')">
+            <img src="https://msp.c.yimg.jp/images/v2/FUTi93tXq405grZVGgDqG-UPEpGiUmLUvyTKINe5lrNdRrjsrxgVfr6wDMN0CLStbOKDqIoK81ZNmgvECDtOsdoWq87mx26qcpoQ1Pyrkl-_YPIH2YqrFYEDm9aR47DL4Vcar6RZDjaWvdw-zxvVnPF9U3e9_-UBuNrgEtdaPyygeyyNMzUFMat_WeATdfpD/919846.png?errorImage=false" alt="アイコン2">
+        </div>
+        <div class="icon" onclick="window.open('https://discord.gg/8nedA5ZYy8')">
+            <img src="https://msp.c.yimg.jp/images/v2/FUTi93tXq405grZVGgDqG9Pf23FWtdraDrlKE3uxUVuTwRJocD6VOjpjR_24iE4PkjAVt9nHenCu29bq5KhEbHiXGA0QKbxQAUESJEOy_ZeLPw4aS5i0AX4GyF1Thzxze-yw8YUpBfq8NMIXYs8UMiaAwnGfyOCJrCqr5cQA5jhIBS7J42UhoQrmyAOaKyRT/discord-icon.svg?errorImage=false" alt="アイコン3">
+        </div>
+        <div class="icon" onclick="window.open('https://www.chatwork.com/g/web-of-the-library')">
+            <img src="https://msp.c.yimg.jp/images/v2/FUTi93tXq405grZVGgDqG-UPEpGiUmLUvyTKINe5lrNdRrjsrxgVfr6wDMN0CLStomoytCTiQIHfIHZkRhmIYcsxVcXcFX4a1T2gXecRU8S_YPIH2YqrFYEDm9aR47DL4Vcar6RZDjaWvdw-zxvVnMOanpNJMoCQ7p8f1hpaYM1IbtxeaXFLpB1RD21E3qzg/906366.png?errorImage=false" alt="アイコン4">
+        </div>
+        <div class="icon" onclick="window.open('https://github.com/mino-hobby-pro')">
+            <img src="https://img.icons8.com/?size=256&id=52539&format=png" alt="アイコン5">
+        </div>
+    </div>
+
+    <div class="overlay" id="deployOverlay">
+        <div class="overlay-content">
+            <h2>デプロイオプション</h2>
+            <p>以下のボタンをクリックして、各プラットフォームにデプロイできます。renderによるホストを強くお勧めします。</p>
+            <a href="https://vercel.com/import/project?template=https://github.com/mino-hobby-pro/sand-smoke-proxy" target="_blank">
+                <img src="https://vercel.com/button" alt="Deploy to Vercel" />
+            </a>
+            <a href="https://koyeb.com/deploy?type=github&repository=https://github.com/mino-hobby-pro/sand-smoke-proxy" target="_blank">
+                <img src="https://www.koyeb.com/static/images/deploy/button.svg" alt="Deploy to Koyeb" />
+            </a>
+            <a href="https://render.com/deploy?repo=https://github.com/mino-hobby-pro/sand-smoke-proxy" target="_blank">
+                <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" />
+            </a>
+            <button onclick="closeOverlay()">閉じる</button>
+        </div>
+    </div>
+
+    <canvas id="sandstormCanvas"></canvas>
+
+    <div class="bottom-bar">
+        <button id="aiButton">SandSmokeAI-SSA！</button>
+        <button id="googleButton">おすすめ最強GoogleProxy</button>
+        <button id="healthButton">設定　health</button>
+        <button id="tellButton">運営からのお知らせ</button>
+        <button id="instanceButton">公式instance</button>
+    </div>
+
+    <div class="counter-card" id="counterCard">
+        <div id="todayAccessCount">今日のアクセス数: 0</div>
+        <div id="totalAccessCount">総アクセス数: 0</div>
+    </div>
+
+    <script>
+        
+        let isProxyMode = false;
+        const canvas = document.getElementById('sandstormCanvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        function drawSandstorm() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(222, 184, 135, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < 100; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const size = Math.random() * 5 + 1;
+                ctx.fillStyle = 'rgba(222, 184, 135, 0.1)';
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            requestAnimationFrame(drawSandstorm);
+        }
+
+        drawSandstorm();
+
+        document.getElementById('deployButton').onclick = function() {
+            document.getElementById('deployOverlay').style.display = 'flex';
+        };
+
+        function closeOverlay() {
+            document.getElementById('deployOverlay').style.display = 'none';
+        }
+
+        document.getElementById('urlListButton').onclick = function() {
+            window.location.href = 'instance.html';
+        };
+
+        document.getElementById('proxyButton').onclick = function() {
+            window.location.href = '/byeschool';
+        };
+
+        document.getElementById('uvproxyButton').onclick = function() {
+            window.location.href = '/ultra';
+        };
+
+        document.getElementById('shadowButton').onclick = function() {
+            window.location.href = '/shadow';
+        };
+
+        document.getElementById('aiButton').onclick = function() {
+            window.location.href = '/ai';
+        };
+
+        document.getElementById('healthButton').onclick = function() {
+            window.location.href = '/health';
+        };
+
+        document.getElementById('tellButton').onclick = function() {
+            window.location.href = '/tell';
+        };
+
+        document.getElementById('googleButton').onclick = function() {
+            window.location.href = '/youtube';
+        };
+
+        document.getElementById('instanceButton').onclick = function() {
+            window.location.href = '/instance';
+        };
+
+        const counterCard = document.getElementById('counterCard');
+        let offsetX, offsetY;
+
+        counterCard.addEventListener('mousedown', function(e) {
+            offsetX = e.clientX - counterCard.getBoundingClientRect().left;
+            offsetY = e.clientY - counterCard.getBoundingClientRect().top;
+            document.addEventListener('mousemove', mouseMoveHandler);
+            document.addEventListener('mouseup', mouseUpHandler);
+        });
+
+        function mouseMoveHandler(e) {
+            counterCard.style.left = (e.clientX - offsetX) + 'px';
+            counterCard.style.top = (e.clientY - offsetY) + 'px';
+        }
+
+        function mouseUpHandler() {
+            document.removeEventListener('mousemove', mouseMoveHandler);
+            document.removeEventListener('mouseup', mouseUpHandler);
+        }
+
+        counterCard.style.position = 'fixed';
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'p') {
+                const proxyButton = document.getElementById('proxyToggle');
+                const rammerheadButton = document.getElementById('rammerheadButton');
+                proxyButton.style.display = proxyButton.style.display === 'none' ? 'inline-block' : 'none';
+                rammerheadButton.style.display = rammerheadButton.style.display === 'none' ? 'inline-block' : 'none';
+            }
+        });
+
+        document.getElementById('proxyToggle').onclick = function() {
+            isProxyMode = !isProxyMode;
+            this.textContent = `プロキシ: ${isProxyMode ? 'ON' : 'OFF'}`;
+        };
+
+        document.getElementById('rammerheadButton').onclick = function() {
+            const link = prompt("URLを入力してください 読み込みには時間がかかります:");
+            if (link) {
+                const proxy = 'https://api.codetabs.com/v1/proxy?quest=';
+                fetch(proxy + link)
+                    .then((response) => response.text())
+                    .then((text) => document.write(text))
+                    .catch((error) => alert("エラーが発生しました: " + error));
+            }
+        };
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                const query = document.getElementById('searchInput').value;
+                if (query) {
+                    const host = window.location.origin;
+
+                    if (isProxyMode) {
+                        const url = "https://google.com/search?q=" + encodeURIComponent(query);
+                        window.location.href = `${host}/proxy/${url}`;
+                    } else {
+                        window.location.href = `${host}/search?q=${encodeURIComponent(query)}`;
+                    }
+                }
+            }
+        }
+    </script>
+
+    <p>↑Donate to the developer↑</p>
+    <p>© 2024 FulickFusion mino_hobby. Use of this site for personal gain is prohibited.</p>
+    <div id="cookie-notice" class="cookie-notice">
+        上のアプリで私とコミュニケーションをとりましょう！<br>
+        <button id="accept-btn" onclick="acceptCookies()">同意する</button>
+        <button id="reject-btn" onclick="rejectCookies()">拒否する</button>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

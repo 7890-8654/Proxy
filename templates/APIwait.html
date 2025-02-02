@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>読み込み中</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(to bottom right, #f0f4f8, #c9d6e9);
+            color: #333;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #message {
+            font-size: 24px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        canvas {
+            border: 2px solid #4a90e2;
+            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            position: absolute;
+            right: 20px;
+            bottom: 20px;
+            width: 225px;  
+            height: 105px; 
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="message">読み込み中です...(すべてのAPIを稼働させています)</div>
+    <canvas id="loadingCanvas"></canvas>
+    
+    <script>
+        // ランダムメッセージの配列
+        const messages = [
+            "しばらくお待ちください...",
+            "Made by proxy_minotaur",
+            "GoogleScriptの状況的に使えないかもしれません、、",
+            "さらに強化されたインスタンスが必要ですか？　Discordに参加してください",
+            "このインスタンスはinvidiousAPIを使用しています",
+            "さらに速さを求めて寄付をお願いします！",
+            "ooooooooooooooooooooooooooooooooooooooooooooooooooo。",
+            "読み込みが長いですか？　最新のバージョンを入手しましょう！"
+        ];
+
+        // ランダムなメッセージを表示する
+        const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+        document.getElementById("message").innerText = randomMessage;
+
+        // 2秒後にリダイレクト
+        setTimeout(function() {
+            location.reload();
+        }, 2000);
+    </script>
+</body>
+</html>

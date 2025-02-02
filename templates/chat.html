@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style id="dynamicStyle">
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #000000; /* Twitter風の背景色 */
+            color: #14171a; /* 文字色 */
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #e1e8ed;
+            border-radius: 10px;
+            background-color: white; /* コンテンツの背景 */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            color: #1da1f2; /* Twitterの青色 */
+        }
+
+        .account-section {
+            display: flex;
+            justify-content: center; /* 中央揃え */
+            margin: 20px 0;
+            flex-wrap: wrap; /* ボタンを折り返す */
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            background-color: #28a745; /* 緑色 */
+        }
+
+        #registerButton, #loginButton, #profileButton, #friendsListButton {
+            background-color: #1da1f2; /* Twitterの青色 */
+        }
+
+        #followButton {
+            background-color: #28a745; /* 緑色 */
+        }
+
+        #emergencyButton {
+            background-color: #dc3545; /* 赤色 */
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: scale(1.05); /* ホバー時に少し拡大 */
+        }
+
+        .blog-section {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #f0f8ff; /* 薄い青色 */
+        }
+
+        .comments {
+            margin-top: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+
+        .comment {
+            border-bottom: 1px solid #e1e8ed;
+            padding: 10px 0;
+        }
+
+        .comment span {
+            font-weight: bold;
+        }
+
+        .reaction-buttons {
+            display: flex;
+            justify-content: flex-start;
+            margin-top: 10px;
+        }
+
+        .reaction-button {
+            background: transparent;
+            border: none;
+            color: #1da1f2;
+            font-size: 18px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .reaction-count {
+            margin-left: 5px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #657786;
+        }
+
+                .video-call-button {
+            background-color: #1da1f2; /* 青色 */
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin: 10px 0;
+        }
+
+        .video-call-button:hover {
+            background-color: #0d8bdc; /* ホバー時の色 */
+        }
+
+        .video-call-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .video-call-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        .close-video-call {
+            background-color: transparent;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: red;
+            margin-top: 10px;
+        }
+        
+    </style>
+    <script type="module">
+        // Firebaseの初期化
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-firestore.js";
+        import { getStorage } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-storage.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBYO7lc3tTKdNlK1wLjTTpneQL-zkYU3uA",
+            authDomain: "chatapp-by-kbk.firebaseapp.com",
+            databaseURL: "https://chatapp-by-kbk-default-rtdb.firebaseio.com",
+            projectId: "chatapp-by-kbk",
+            storageBucket: "chatapp-by-kbk.appspot.com",
+            messagingSenderId: "254822225505",
+            appId: "1:254822225505:web:1d8121702659a448fa7c20",
+            measurementId: "G-ZPDHPNGVSN"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+        const auth = getAuth(app);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const blockedUsers = new Set();
+            const blockOverlay = document.createElement('div');
+            blockOverlay.classList.add('block-overlay');
+            const blockText = document.createElement('div');
+            blockText.classList.add('block-message-large');
+            blockText.textContent = "すべての機能が許可されています。";
+            blockOverlay.appendChild(blockText);
+            document.body.appendChild(blockOverlay);
+
+            const onlineUsersRef = collection(db, 'onlineUsers');
+            const userActivityRef = collection(db, 'userActivity'); // ユーザーアクティビティコレクション
+            const badgesRef = collection(db, "badges"); // バッジのコレクション
+
+            // 信用スコアの更新
+            const updateTrustScore = async (userId, score) => {
+                const userDocRef = doc(db, 'users', userId);
+                const userSnap = await getDocs(userDocRef);
+                const userData = userSnap.data();
+
+                const newScore = (userData.trustScore || 0) + score;
+
+                await updateDoc(userDocRef, { trustScore: newScore });
+            };
+
+            // Online User Functions
+            const addOnlineUser = async (userId) => {
+                await addDoc(onlineUsersRef, { userId: userId });
+            };
+
+            const getOnlineUsers = async () => {
+                const snapshot = await getDocs(onlineUsersRef);
+                return snapshot.docs.map(doc => doc.data().userId);
+            };
+
+            // バッジを表示する関数
+            const displayBadges = async (userId) => {
+                const userDoc = await getDocs(collection(db, "users"));
+                const user = userDoc.docs.find(doc => doc.data().uid === userId)?.data();
+                const badgesContainer = document.createElement('div');
+                badgesContainer.classList.add('badges');
+
+                if (user) {
+                    const badges = user.badges || [];
+
+                    badges.forEach(badge => {
+                        const badgeElement = document.createElement('div');
+                        badgeElement.classList.add('badge');
+                        badgeElement.textContent = badge;
+                        badgesContainer.appendChild(badgeElement);
+                    });
+
+                    document.body.appendChild(badgesContainer);
+                }
+            };
+
+            // バッジを獲得する関数
+            const awardBadge = async (userId, badge) => {
+                const userDocRef = doc(db, 'users', userId);
+                const userSnap = await getDocs(userDocRef);
+                const userData = userSnap.data();
+
+                const badges = userData.badges || [];
+
+                if (!badges.includes(badge)) {
+                    badges.push(badge);
+                    await updateDoc(userDocRef, { badges: badges });
+                    alert(`バッジ「${badge}」を獲得しました！`);
+                    displayBadges(userId); // バッジを再表示
+                }
+            };
+
+            // フォローボタンのクリックリスナー
+            document.getElementById('followButton').onclick = async function () {
+                await updateTrustScore(userId, 1); // フォローするとスコア追加
+                const userDocRef = doc(db, 'users', userId);
+                const userSnap = await getDocs(userDocRef);
+                const userData = userSnap.data();
+
+                // バッジを獲得
+                if (userData.followers.length === 9) { // 9人目のフォロワー
+                    await awardBadge(userId, "10人フォロワー");
+                }
+            };
+
+            // コミュニケーションセクション設定
+            const commentInput = document.getElementById('commentInput');
+            const submitCommentButton = document.getElementById('submitComment');
+            const commentList = document.getElementById('commentList');
+            const showMoreButton = document.getElementById('showMoreButton');
+            const passwordInput = document.getElementById('passwordInput');
+            const deleteCommentsButton = document.getElementById('deleteCommentsButton');
+            const emergencyButton = document.getElementById('emergencyButton');
+
+            const usernameInput = document.getElementById('usernameInput');
+            const registerButton = document.getElementById('registerButton');
+            const loginButton = document.getElementById('loginButton');
+            const userStatus = document.getElementById('userStatus');
+
+            const profilePopup = document.createElement('div');
+            profilePopup.classList.add('profile-popup');
+
+            let userId = null;
+            let username = null;
+            let userComment = ""; // プロフィールの一言コメント
+            let following = new Set(); // フォローしているユーザーを格納するセット
+
+            // スタイル切り替えの関数
+            const toggleStyles = () => {
+                const currentStyle = document.getElementById('dynamicStyle');
+                if (currentStyle.innerHTML.includes('background-color: #000000')) {
+                    currentStyle.innerHTML = `
+                    body {
+                        background-image: url('https://th.bing.com/th/id/OIG2.Wnln.UlFDTVAyzs4L3a2?pid=ImgGn');
+                        background-size: cover;
+                        background-position: center;
+                        margin: 0;
+                        font-family: Arial, sans-serif;
+                    }
+
+                    .large-text {
+                        font-size: 48px;
+                        font-weight: bold;
+                        text-align: center;
+                        color: white;
+                        margin-top: 20px;
+                    }
+
+                    /* ボタンのスタイル */
+                    #followButton,
+                    #aboutBlankButton,
+                    #emergencyButton,
+                    #proxyButton,
+                    #registerButton,
+                    #loginButton,
+                    #profileButton,
+                    #friendsListButton {
+                        display: block;
+                        margin: 20px auto;
+                        padding: 10px 20px;
+                        font-size: 24px;
+                        font-weight: bold;
+                        color: white;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        transition: background-color 0.3s;
+                    }
+
+                    /* アカウント関連のボタンのスタイルを緑に変更 */
+                    #registerButton,
+                    #loginButton,
+                    #profileButton {
+                        background-color: #28a745; /* 緑色 */
+                    }
+
+                    #registerButton:hover,
+                    #loginButton:hover,
+                    #profileButton:hover {
+                        background-color: #218838; /* ホバー時の色 */
+                    }
+
+                    #followButton:hover {
+                        background-color: #0056b3;
+                    }
+
+                    #aboutBlankButton {
+                        background-color: #28a745;
+                    }
+
+                    #aboutBlankButton:hover {
+                        background-color: #218838;
+                    }
+
+                    #emergencyButton {
+                        background-color: #dc3545;
+                    }
+
+                    #emergencyButton:hover {
+                        justify-content: center;
+                        align-items: center;
+                    }
+
+                    .close-button {
+                        position: absolute;
+                        top: 20px;
+                        right: 20px;
+                        font-size: 24px;
+                        color: white;
+                        cursor: pointer;
+                    }
+
+                    .block-overlay {
+                        display: none;
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.85);
+                        justify-content: center;
+                        align-items: center;
+                        z-index: 9999;
+                    }
+
+                    .block-message-large {
+                        font-size: 32px;
+                        color: white;
+                        text-align: center;
+                    }
+
+                    .user-list {
+                        padding: 20px;
+                        background-color: white;
+                        border-radius: 10px;
+                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+                        max-width: 300px;
+                        text-align: center;
+                    }
+
+                    .profile-popup {
+                        position: fixed;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        background-color: white;
+                        border-radius: 10px;
+                        padding: 20px;
+                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+                        z-index: 1001;
+                        display: none;
+                    }
+
+                    .profile-popup h3 {
+                        margin-top: 0;
+                    }
+
+                    .popup-overlay {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.7);
+                        display: none;
+                        justify-content: center;
+                        align-items: center;
+                        z-index: 1000;
+                    }
+
+                    .profile-form {
+                        background: white;
+                        padding: 20px;
+                        border-radius: 10px;
+                        width: 300px;
+                    }
+
+                    .profile-actions {
+                        display: flex;
+                        justify-content: space-between;
+                    }
+
+                    .iframe-container {
+                        position: relative;
+                        width: 100%;
+                        height: 100%;
+                        background: white;
+                        border: none;
+                    }
+
+                    /* 友達リストのスタイル */
+                    .friend-list {
+                        margin: 20px;
+                        padding: 10px;
+                        background: rgba(255, 255, 255, 0.9);
+                        border-radius: 10px;
+                        max-width: 300px;
+                    }
+
+                    .friend {
+                        padding: 5px;
+                        cursor: pointer;
+                        border-bottom: 1px solid #ccc;
+                    }
+
+                    .friend:hover {
+                        background-color: #eee;
+                    }
+
+                    .badge {
+                        background-color: #ffd700; /* ゴールドバッジ */
+                        color: black;
+                        padding: 10px;
+                        border-radius: 5px;
+                        display: inline-block;
+                        margin: 5px;
+                    }
+
+                    /* robots.txt 名前の変更スタイル */
+                    @keyframes colorChange {
+                        0% { color: red; }
+                        25% { color: orange; }
+                        50% { color: yellow; }
+                        75% { color: green; }
+                        100% { color: blue; }
+                    }
+                    `;
+                } else {
+                    currentStyle.innerHTML = `
+                    body {
+                        margin: 0;
+                        font-family: Arial, sans-serif;
+                        background-color: #000000; /* Twitter風の背景色 */
+                        color: #14171a; /* 文字色 */
+                    }
+
+                    .container {
+                        max-width: 800px;
+                        margin: auto;
+                        padding: 20px;
+                        border: 1px solid #e1e8ed;
+                        border-radius: 10px;
+                        background-color: white; /* コンテンツの背景 */
+                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                    }
+
+                    .header {
+                        text-align: center;
+                        padding: 20px;
+                    }
+
+                    .header h1 {
+                        margin: 0;
+                        font-size: 2.5em;
+                        color: #1da1f2; /* Twitterの青色 */
+                    }
+
+                    .account-section {
+                        display: flex;
+                        justify-content: center; /* 中央揃え */
+                        margin: 20px 0;
+                        flex-wrap: wrap; /* ボタンを折り返す */
+                    }
+
+                    button {
+                        padding: 10px 20px;
+                        font-size: 16px;
+                        color: white;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        transition: background-color 0.3s;
+                        background-color: #28a745; /* 緑色 */
+                    }
+
+                    #registerButton, #loginButton, #profileButton, #friendsListButton {
+                        background-color: #1da1f2; /* Twitterの青色 */
+                    }
+
+                    #followButton {
+                        background-color: #28a745; /* 緑色 */
+                    }
+
+                    #emergencyButton {
+                        background-color: #dc3545; /* 赤色 */
+                    }
+
+                    button:hover {
+                        opacity: 0.9;
+                        transform: scale(1.05); /* ホバー時に少し拡大 */
+                    }
+
+                    .blog-section {
+                        margin-top: 20px;
+                        padding: 20px;
+                        border-radius: 10px;
+                        background-color: #f0f8ff; /* 薄い青色 */
+                    }
+
+                    .comments {
+                        margin-top: 20px;
+                    }
+
+                    textarea {
+                        width: 100%;
+                        padding: 10px;
+                        border-radius: 5px;
+                        border: 1px solid #ccc;
+                        margin-bottom: 10px;
+                    }
+
+                    .comment {
+                        border-bottom: 1px solid #e1e8ed;
+                        padding: 10px 0;
+                    }
+
+                    .comment span {
+                        font-weight: bold;
+                    }
+
+                    .reaction-buttons {
+                        display: flex;
+                        justify-content: flex-start;
+                        margin-top: 10px;
+                    }
+
+                    .reaction-button {
+                        background: transparent;
+                        border: none;
+                        color: #1da1f2;
+                        font-size: 18px;
+                        cursor: pointer;
+                        margin-right: 10px;
+                    }
+
+                    .reaction-count {
+                        margin-left: 5px;
+                    }
+
+                    .footer {
+                        text-align: center;
+                        margin-top: 20px;
+                        font-size: 0.9em;
+                        color: #657786;
+                    }
+                    `;
+                }
+            };
+
+            // スタイルを戻すボタンの追加
+            const resetStyleButton = document.createElement('button');
+            resetStyleButton.textContent = 'スタイルを戻す';
+            resetStyleButton.onclick = toggleStyles;
+            document.body.appendChild(resetStyleButton);
+
+            // プロフィールポップアップを表示する関数
+            const showProfilePopup = async (user) => {
+                const followersCount = user.followers.length; // フォロワー数
+                const followingCount = following.size; // 自分がフォローしている数
+
+                const profileImage = user.profileImage ? `<img src="${user.profileImage}" alt="プロフィール画像" class="profile-image"/>` : '';
+                
+                profilePopup.innerHTML = `
+                    <h3>${user.username}のプロフィール</h3>
+                    ${profileImage}
+                    <input type="text" id="profileCommentInput" placeholder="一言コメント" value="${user.comment || ''}" />
+                    <div>フォロー数: ${followingCount}</div>
+                    <div>フォロワー数: ${followersCount}</div>
+                    <div>信用スコア: ${user.trustScore || 0}</div>
+                    <div class="badges"></div>
+                    ${user.uid === userId ? 
+                        `<button id="saveProfileButton">保存</button>` : 
+                        '<button id="followUserButton">フォロー</button>'}
+                    <button class='closePopup'>閉じる</button>
+                `;
+                profilePopup.style.display = 'block'; // ポップアップを表示
+                await displayBadges(user.uid); // バッジを表示
+
+                document.body.appendChild(profilePopup);
+                profilePopup.querySelector('.closePopup').onclick = () => {
+                    profilePopup.style.display = 'none'; // ポップアップを閉じる
+                    profilePopup.remove();
+                };
+
+                if (user.uid === userId) {
+                    profilePopup.querySelector('#saveProfileButton').onclick = async () => {
+                        const updatedComment = profilePopup.querySelector('#profileCommentInput').value;
+                        await updateDoc(doc(db, 'users', user.uid), { 
+                            comment: updatedComment 
+                        });
+                        userComment = updatedComment; // 保存されたコメントを保持
+                        userStatus.textContent = `ようこそ、${user.username}さん！コメント: ${userComment}`;
+                        profilePopup.style.display = 'none'; // ポップアップを閉じる
+                        profilePopup.remove();
+                    };
+                } else {
+                    profilePopup.querySelector('#followUserButton').onclick = async () => {
+                        if (!userId) {
+                            alert('アカウントを作成またはログインしてください。');
+                            return;
+                        }
+                        // フォローロジック
+                        if (following.has(user.uid)) {
+                            alert('既にフォローしています。');
+                        } else {
+                            following.add(user.uid);
+                            await updateDoc(doc(db, 'users', user.uid), { followers: [...user.followers, userId] });
+                            await updateDoc(doc(db, 'users', userId), {
+                                following: [...following] // 自分のフォロー数を更新
+                            });
+                            await updateTrustScore(userId, 1); // スコア追加
+                            alert('フォローしました！');
+                            profilePopup.querySelector('#followUserButton').textContent = "フォロー済み"; // ボタン変更
+                        }
+                    };
+                }
+            };
+
+            const registerButtonHandler = async () => {
+                const password = prompt("パスワードを設定してください:");
+                const usernameInputValue = prompt("ユーザー名を入力してください:");
+
+                if (!password || !usernameInputValue) {
+                    alert('すべてのフィールドを入力してください。');
+                    return;
+                }
+
+                try {
+                    userId = Date.now().toString(); // 仮のユーザーID生成
+                    username = usernameInputValue;
+                    await addDoc(collection(db, "users"), { uid: userId, username: username, password: password, followers: [], following: [], comment: "", profileImage: "", trustScore: 0, badges: [] }); // trustScoreを初期化
+                    alert('アカウントが作成されました！');
+                    userStatus.textContent = `ようこそ、${username}さん！`;
+                } catch (error) {
+                    alert('登録中にエラーが発生しました: ' + error.message);
+                }
+            };
+
+            registerButton.onclick = registerButtonHandler;
+
+            loginButton.onclick = async () => {
+                const usernameInputValue = prompt("ユーザー名を入力してください:");
+                const password = prompt("パスワードを入力してください:");
+
+                const userSnapshot = await getDocs(collection(db, "users"));
+                let userFound = false;
+
+                userSnapshot.docs.forEach(doc => {
+                    if (doc.data().username === usernameInputValue) {
+                        userFound = true;
+                        if (doc.data().password === password) {
+                            userId = doc.data().uid;
+                            username = doc.data().username;
+                            userComment = doc.data().comment; // プロフィールの一言コメントを取得
+                            following = new Set(doc.data().following); // フォロワー情報を保持
+                            alert('ログインに成功しました！');
+                            userStatus.innerHTML = `ようこそ、${username}さん！コメント: ${userComment}`;
+                        } else {
+                            alert('パスワードが正しくありません。');
+                        }
+                    }
+                });
+
+                if (!userFound) {
+                    alert('そのユーザーは存在しません。');
+                }
+            };
+
+            // プロフィールボタンのクリックリスナー
+            const profileButton = document.getElementById('profileButton');
+            profileButton.onclick = async function () {
+                if (!userId) {
+                    alert('まずログインしてください。');
+                    return;
+                }
+                const userSnapshot = await getDocs(collection(db, "users"));
+                const user = userSnapshot.docs.find(doc => doc.data().uid === userId)?.data();
+                if (user) {
+                    showProfilePopup(user);
+                } else {
+                    alert('ユーザーが見つかりません。');
+                }
+            };
+
+            // Submit Comment
+            const submittedComments = new Set(); 
+            let allComments = [];
+            let commentsVisible = 3; 
+
+            submitCommentButton.onclick = async function () {
+                const comment = commentInput.value.trim();
+
+                if (!comment) {
+                    alert('コメントを入力してください。');
+                    return;
+                }
+
+                const now = Date.now();
+                const commentKey = `${username}:${comment}`;
+                if (submittedComments.has(commentKey)) {
+                    alert('同じコメントは送信できません。');
+                    return;
+                }
+
+                if (comment.length > 200) {
+                    alert('コメントは200文字以内で入力してください。');
+                    return;
+                }
+
+                const newCommentRef = await addDoc(collection(db, "comments"), {
+                    name: username || "ゲスト", 
+                    userId: userId || "guest_user", 
+                    comment: comment,
+                    timestamp: now,
+                    likes: 0,
+                    anger: 0
+                });
+
+                allComments.push({ name: username || "ゲスト", comment, timestamp: now, id: newCommentRef.id, userId: userId || "guest_user", likes: 0, anger: 0 });
+                updateCommentDisplay();
+                submittedComments.add(commentKey); 
+
+                // コミュニケーション数を記録して信頼スコアを増加
+                await updateTrustScore(userId || "guest_user", 1); // コメント数を増加させ、スコアを加算
+
+                // コメントが50件を超えた場合の削除
+                if (allComments.length >= 50) {
+                    await deleteAllComments();
+                }
+
+                // 入力フィールドをクリア
+                commentInput.value = '';
+
+                await addOnlineUser(userId || "guest_user");
+            };
+
+            async function deleteAllComments() {
+                const commentsSnapshot = await getDocs(collection(db, "comments"));
+                const deletePromises = commentsSnapshot.docs.map(doc => deleteDoc(doc.ref));
+                await Promise.all(deletePromises);
+                alert('コメントが50件を超えたため、すべてのコメントが削除されました。');
+                updateCommentDisplay();
+            }
+
+            onSnapshot(collection(db, "comments"), async (snapshot) => {
+                allComments = [];
+
+                for (const doc of snapshot.docs) {
+                    const data = doc.data();
+                    allComments.push({ ...data, id: doc.id });
+                }
+
+                allComments.sort((a, b) => b.timestamp - a.timestamp);
+                updateCommentDisplay();
+            });
+
+            showMoreButton.onclick = () => {
+                commentsVisible = allComments.length; 
+                updateCommentDisplay();
+                showMoreButton.classList.add('hidden-comments'); 
+            };
+
+            // コメント削除ボタンのクリックリスナー
+            deleteCommentsButton.onclick = async function () {
+                const inputPassword = passwordInput.value.trim();
+
+                if (checkPassword(inputPassword)) {
+                    await deleteAllComments();
+                    passwordInput.value = '';
+                    alert('全てのコメントを削除しました。');
+                } else {
+                    alert('無効なパスワードです。');
+                }
+            };
+
+            function checkPassword(inputPassword) {
+                return inputPassword === '0122333'; 
+            }
+
+            emergencyButton.onclick = async function () {
+                const emergencyPassword = prompt("パスワードを入力してください：");
+                if (checkPassword(emergencyPassword)) {
+                    const deleteInterval = setInterval(async () => {
+                        const commentsSnapshot = await getDocs(collection(db, "comments"));
+                        if (commentsSnapshot.size > 0) {
+                            await deleteAllComments();
+                        }
+                    }, 1000);
+
+                    setTimeout(() => {
+                        clearInterval(deleteInterval);
+                        alert('非常用機能が終了しました。');
+                    }, 120000);
+                } else {
+                    alert('無効なパスワードです。');
+                }
+            };
+
+            function updateCommentDisplay() {
+                commentList.innerHTML = '';
+                const commentsToDisplay = allComments.slice(0, commentsVisible);
+
+                commentsToDisplay.forEach((data) => {
+                    const newComment = document.createElement('div');
+                    newComment.classList.add('comment');
+
+                    const usernameLink = document.createElement('span');
+                    usernameLink.textContent = data.name;
+                    usernameLink.style.cursor = 'pointer';
+
+                    if (data.name === "robots.txt") {
+                        usernameLink.style.animation = "colorChange 3s infinite"; // 3秒間の色変更アニメーション
+                    }
+
+                    usernameLink.onclick = async () => {
+                        const userSnapshot = await getDocs(collection(db, "users"));
+                        const user = userSnapshot.docs.find(doc => doc.data().uid === data.userId)?.data();
+
+                        if (user) {
+                            showProfilePopup(user);
+                        } else {
+                            alert('ユーザーが見つかりません');
+                        }
+                    };
+
+                    newComment.appendChild(usernameLink);
+                    newComment.appendChild(document.createTextNode(` (ユーザーID: ${data.userId}): ${data.comment}`));
+
+                    const timestamp = new Date(data.timestamp).toLocaleString();
+                    const timestampElement = document.createElement('div');
+                    timestampElement.classList.add('timestamp');
+                    timestampElement.textContent = `投稿日: ${timestamp}`;
+
+                    const reactionButtons = document.createElement('div');
+                    reactionButtons.classList.add('reaction-buttons');
+
+                    const likeButton = document.createElement('button');
+                    likeButton.classList.add('reaction-button');
+                    likeButton.textContent = '👍';
+                    likeButton.onclick = async () => {
+                        data.likes++;
+                        await updateDoc(doc(db, "comments", data.id), { likes: data.likes });
+                        updateCommentDisplay();
+                    };
+
+                    const angerButton = document.createElement('button');
+                    angerButton.classList.add('reaction-button');
+                    angerButton.textContent = '😡';
+                    angerButton.onclick = async () => {
+                        data.anger++;
+                        await updateDoc(doc(db, "comments", data.id), { anger: data.anger });
+                        updateCommentDisplay();
+                    };
+
+                    const likeCount = document.createElement('span');
+                    likeCount.classList.add('reaction-count');
+                    likeCount.textContent = `(${data.likes})`;
+
+                    const angerCount = document.createElement('span');
+                    angerCount.classList.add('reaction-count');
+                    angerCount.textContent = `(${data.anger})`;
+
+                    reactionButtons.appendChild(likeButton);
+                    reactionButtons.appendChild(likeCount);
+                    reactionButtons.appendChild(angerButton);
+                    reactionButtons.appendChild(angerCount);
+
+                    newComment.appendChild(reactionButtons);
+                    newComment.appendChild(timestampElement);
+                    commentList.appendChild(newComment);
+                });
+            }
+
+            // 友達リストを表示する関数
+            const showFriendsList = async () => {
+                const friendListContainer = document.createElement('div');
+                friendListContainer.classList.add('friend-list');
+
+                const userDoc = await getDocs(collection(db, "users"));
+                const currentUser = userDoc.docs.find(doc => doc.data().uid === userId)?.data();
+                const friends = currentUser ? currentUser.following : [];
+
+                if (friends.length === 0) {
+                    friendListContainer.innerHTML = '<p>フォローしているユーザーはいません。</p>';
+                } else {
+                    friends.forEach(async (friendId) => {
+                        const friendDoc = userDoc.docs.find(doc => doc.data().uid === friendId);
+                        if (friendDoc) {
+                            const friendData = friendDoc.data();
+                            const friendElement = document.createElement('div');
+                            friendElement.classList.add('friend');
+                            friendElement.textContent = friendData.username;
+
+                            friendElement.onclick = () => {
+                                showProfilePopup(friendData); // フレンドのプロフィールを表示
+                            };
+
+                            friendListContainer.appendChild(friendElement);
+                        }
+                    });
+                }
+
+                const overlay = document.createElement('div');
+                overlay.classList.add('popup-overlay');
+                overlay.appendChild(friendListContainer);
+
+                const closeFriendListButton = document.createElement('button');
+                closeFriendListButton.textContent = '閉じる';
+                closeFriendListButton.onclick = () => {
+                    overlay.style.display = 'none';
+                    document.body.removeChild(overlay);
+                };
+                overlay.appendChild(closeFriendListButton);
+
+                document.body.appendChild(overlay);
+                overlay.style.display = 'flex';
+            };
+
+            // 友達リストボタンのクリックリスナー
+            document.getElementById('friendsListButton').onclick = showFriendsList;
+
+            // プロキシを起動ボタンのクリックリスナー
+            document.getElementById('proxyButton').onclick = function () {
+                const overlay = document.createElement('div');
+                overlay.classList.add('popup-overlay');
+                overlay.innerHTML = `
+                    <div class="fullscreen-overlay">
+                        <button class="close-button">✖</button>
+                        <div class="iframe-container">
+                            <iframe src="https://neon.go4it.com.mx" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+                overlay.style.display = 'flex';
+
+                overlay.querySelector('.close-button').onclick = function () {
+                    overlay.style.display = 'none';
+                    document.body.removeChild(overlay);
+                };
+            };
+
+            // Cookieの承認
+            const cookieNotice = document.getElementById('cookie-notice');
+            cookieNotice.style.display = 'block';
+
+            document.getElementById('accept-btn').onclick = () => {
+                cookieNotice.style.display = 'none';
+                // ここにクッキーを許可する処理を追加
+            };
+
+            document.getElementById('reject-btn').onclick = () => {
+                cookieNotice.style.display = 'none';
+                // ここにクッキーを拒否する処理を追加
+            };
+        });
+
+                document.getElementById('videoCallButton').onclick = () => {
+            const overlay = document.getElementById('videoCallOverlay');
+            overlay.style.display = 'flex'; // オーバーレイを表示
+        };
+
+        document.querySelector('.close-video-call').onclick = () => {
+            const overlay = document.getElementById('videoCallOverlay');
+            overlay.style.display = 'none'; // オーバーレイを非表示
+        };
+
+        document.getElementById('videoCallButton').onclick = () => {
+    window.open("https://bellbird.dmm.com/app/meeting/830gTMnaEe-Rc2OB9RBc4g", "_blank"); 
+};
+
+    </script>
+</head>
+
+<body>
+    <div class="large-text">made by minotaur</div>
+
+    <div class="account-section">
+        <button id="registerButton">アカウント作成</button>
+        <button id="loginButton">ログイン</button>
+        <button id="profileButton">プロフィールを作成/編集</button>
+        <button id="friendsListButton">友達リストを表示</button>
+        <div id="userStatus"></div>
+    </div>
+
+    <button id="followButton">proxy_minotaurをフォロー</button>
+    <button id="aboutBlankButton">about:blankを開く</button>
+    <button id="proxyButton">プロキシを起動</button>
+
+    <div class="blog-section">
+        <h2>ブログセクション</h2>
+        <p>チャットシステムと独自のAPIを利用した最強のinviインスタンスの融合型、それがこのサイトです！！　YUKI:50個のinviインスタンスから動画を取得、デザインの改善　chat:FirebaseAPIを使用。リアルタイムで世界中の人と話せる　　　公式スタジオhttps://scratch.mit.edu/studios/35947626/</p>
+        <p>チャットのルールです新規の方はお読みください　https://scratch.mit.edu/projects/1100489494/</p>
+        <p>ビデオ通話は相対概念として反すると思ったので廃止しました。コメ消すパスワードを変更しました（一部instanceでは最新されない恐れあり）</p>
+        <div class="comments">
+            <textarea id="commentInput" placeholder="コメントを入力" rows="4"></textarea>
+            <button id="submitComment">コメントを送信</button>
+            <div id="commentList"></div>
+            <button id="showMoreButton">すべて表示</button>
+
+            <div class="delete-section">
+                <input type="password" id="passwordInput" placeholder="パスワードを入力" />
+                <button id="deleteCommentsButton">コメントを削除</button>
+            </div>
+        </div>
+    </div>
+
+       <div class="video-call-overlay" id="videoCallOverlay">
+        <div class="video-call-content">
+            <h3>ビデオ通話を開始</h3>
+            <iframe src="https://bellbird.dmm.com/app/meeting/830gTMnaEe-Rc2OB9RBc4g" width="400" height="300" frameborder="0" allowfullscreen></iframe>
+            <button class="close-video-call">✖ 閉じる</button>
+        </div>
+    </div>
+    
+    <!-- Cookieの承認 -->
+    <div id="cookie-notice" class="cookie-notice">
+        最新のYUKIインスタンスにとぶ。<br>
+        <button id="accept-btn">OK（YUKIにとぶ）</button>
+        <button id="reject-btn">NO（チャットにとどまる）</button>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

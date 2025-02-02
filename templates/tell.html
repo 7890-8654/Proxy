@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>運営からのお知らせ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 1em 0;
+        }
+        .container {
+            width: 80%;
+            margin: 20px auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        .notification {
+            border-left: 5px solid #4CAF50;
+            padding: 10px 15px;
+            margin: 10px 0;
+        }
+        .notification h3 {
+            margin: 0;
+            font-size: 1.2em;
+        }
+        .notification p {
+            margin: 5px 0;
+        }
+        footer {
+            text-align: center;
+            padding: 1em 0;
+            background-color: #4CAF50;
+            color: white;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>運営からのお知らせ</h1>
+    <p>過度なリクエストやhttpヘッダーを設定してのAPIリクエストはおやめください。サーバーがダウンすることがあります,,,</p>
+</header>
+
+<div class="container">
+    <div class="notification">
+        <h3>healthページの実装</h3>
+        <p>このページは、SandSmokeのAPIの健全性を確認するためのツールです。ユーザーは、指定されたAPIの応答時間やステータスを確認し、問題が発生しているAPIを特定することができます。</p>
+
+<p>主な機能:
+API 名称: 各APIの識別名を表示します。</p>
+<p>応答時間 (ms): APIが応答するのにかかる時間をミリ秒単位で表示します。応答が速いほど、サービスが正常に機能していることを示します。</p>
+<p>ステータス: APIの状態を「正常」または「エラー」として表示します。正常な場合は、APIが正しく動作しています。エラーの場合は、何らかの問題が発生していることを示します。</p>
+<p>エラーメッセージ: エラーが発生した場合は、具体的なエラーメッセージやステータスコードを表示します。これにより、問題の診断が容易になります。</p>
+<p>ヘルスチェックの流れ:</p>
+<p>ページが読み込まれると、自動的に設定されたAPIのヘルスチェックが開始されます。
+各APIへのリクエストが送信され、その応答時間とステータスが記録されます。
+結果はテーブル形式で表示され、各APIの健康状態が一目でわかります。
+最後に、全体のAPIの健全性を基にしたアドバイスが表示され、必要なアクションについての指針が提供されます。</p>
+<p>注意点:</p>
+ネットワークの状況によって、応答時間やステータスが変動することがあります。定期的にチェックを行い、APIの健全性を維持することをお勧めします。</p>
+    </div>
+    <div class="notification">
+        <h3>GoogleProxy</h3>
+        <p>簡単な外部プロキシサーバーの実装。決してiframeでサイトを埋め込んでいるわけではないので、真にブロック不可能な完全なアンブロッカーとなる。</p>
+    </div>
+    <div class="notification">
+        <h3>AIの性格変更</h3>
+        <p>完全に自分のエゴで話しかたを変え、日本語で応答してくれるようにした。</p>
+    </div>
+</div>
+
+<footer>
+    <p>&copy; 2024. mino_hobby All rights.</p>
+</footer>
+
+</body>
+</html>
